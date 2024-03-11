@@ -1,18 +1,32 @@
-#include <Arduino.h>
+#include <SPI.h>
+#include <RF24.h>
 
-// put function declarations here:
-int myFunction(int, int);
+RF24 radio(4, 5); // CE, CSN
+
+const byte address[6] = "00001";
+
+struct SensorValues
+{
+  char textValue;
+  // int airValue;
+  // float fuzzyValue;
+};
+
+SensorValues receivedData;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(9600);
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening(); // Set as receiver
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  if (radio.available()) {
+    radio.read(&receivedData, sizeof(receivedData));
+    Serial.println("============================");
+    Serial.print("Message Received: ");
+    Serial.println(receivedData.textValue);
+  }
 }
