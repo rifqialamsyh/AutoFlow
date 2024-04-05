@@ -2,7 +2,7 @@ const mysql = require("mysql");
 const { nanoid } = require("nanoid");
 const db = require("./connection");
 
-exports.main = (req, res) => {
+exports.main = (res) => {
   res.status(200).json({
     success: true,
     message: "AutoFlow API is running!",
