@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flaskext.mysql import MySQL
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from nanoid import generate
 
 app = Flask(__name__)
@@ -53,7 +53,15 @@ def addData():
     temperature = data['temperature']
     soil_moisture = data['soil_moisture']
     amount_of_water = data['amount_of_water']
-    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Define Jakarta time zone (GMT+7)
+    jakarta_tz = timezone(timedelta(hours=7))
+    # Get current time in Jakarta time zone
+    current_time = datetime.now(jakarta_tz)
+    # Format the time
+    formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    date = formatted_time
 
     # Koneksi MySQL
     conn = mysql.connect()

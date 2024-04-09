@@ -3,10 +3,8 @@ Werkzeug
 joblib
 pandas
 numpy
-matplotlib
 Pillow
 gunicorn
-google-cloud-storage
 flask-mysql==1.5.2
 requests
 nanoid
