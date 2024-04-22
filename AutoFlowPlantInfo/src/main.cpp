@@ -1,42 +1,53 @@
-#include <Arduino.h>
 #include <DHT.h>
 #include <SPI.h>
-#include <Wire.h>
+#include <nRF24L01.h>
+#include <RF24.h>
 
-#define DHT_PIN 3
-#define DHT_TYPE DHT11
+#define DHTPIN 3 // Pin connected to DHT11 sensor
+#define DHTTYPE DHT11 // DHT11 sensor type
 
-#define AOUT_PIN A6
-#define THRESHOLD 530
+DHT dht(DHTPIN, DHTTYPE);
 
-DHT dht(DHT_PIN, DHT_TYPE);
-float temperature = 0;
+const int soilMoisturePin = A6; // Pin connected to soil moisture sensor
 
-void readTemp();
+RF24 radio(7, 8); // CE, CSN pins
+
+struct SensorData {
+  float temperature;
+  int soilMoisturePercentage; // Change to percentage
+};
 
 void setup() {
-    // put your setup code here, to run once:
-    Serial.begin(9600);
-    dht.begin();
+  Serial.begin(9600);
+  dht.begin();
+  radio.begin();
+  radio.openWritingPipe(0xF0F0F0F0E1LL); // Set the address for communication
+  radio.setPALevel(RF24_PA_LOW);        // Set power level
 }
 
 void loop() {
-    // put your main code here, to run repeatedly:
-    int value = analogRead(AOUT_PIN); // read the analog value from sensor
-    readTemp();
+  // Read temperature from DHT11 sensor
+  float temperature = dht.readTemperature();
 
-    if (value > THRESHOLD)
-      Serial.print("The soil is DRY (");
-    else
-      Serial.print("The soil is WET (");
+  // Read soil moisture value
+  int soilMoistureValue = analogRead(soilMoisturePin);
+  
+  // Map the soil moisture value to a percentage scale
+  int soilMoisturePercentage = map(soilMoistureValue, 0, 1023, 0, 100);
 
-    Serial.print(value);
-    Serial.println(")");
-    Serial.print("Temperature: ");
-    Serial.println(temperature);
-    delay(5000);
-}
+  // Bundle the sensor data
+  SensorData data;
+  data.temperature = temperature;
+  data.soilMoisturePercentage = soilMoisturePercentage; // Store percentage instead of raw value
 
-void readTemp() {
-    temperature = dht.readTemperature();
+  // Send the data via NRF24L01
+  radio.write(&data, sizeof(data));
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.print("°C, Soil Moisture: ");
+  Serial.print(soilMoisturePercentage); // Print percentage instead of raw value
+  Serial.println("%");
+
+  // Wait before sending again
+  delay(1000); // Delay for 1 second
 }
