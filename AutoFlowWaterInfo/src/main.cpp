@@ -51,7 +51,7 @@ void loop() {
   Serial.println(" liters");
 
   Serial.print("Distance:");
-  Serial.println(distance);
+  Serial.println(actualDistance);
 
   // Wait before sending again
   delay(1000); // Delay for 1 second

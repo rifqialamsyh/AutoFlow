@@ -14,7 +14,7 @@ RF24 radio(7, 8); // CE, CSN pins
 
 struct SensorData {
   float temperature;
-  int soilMoistureValue;
+  int soilMoisturePercentage; // Change to percentage
 };
 
 void setup() {
@@ -31,18 +31,23 @@ void loop() {
 
   // Read soil moisture value
   int soilMoistureValue = analogRead(soilMoisturePin);
+  
+  // Map the soil moisture value to a percentage scale
+  int soilMoisturePercentage = map(soilMoistureValue, 0, 1023, 0, 100);
 
   // Bundle the sensor data
   SensorData data;
   data.temperature = temperature;
-  data.soilMoistureValue = soilMoistureValue;
+  data.soilMoisturePercentage = soilMoisturePercentage; // Store percentage instead of raw value
 
   // Send the data via NRF24L01
   radio.write(&data, sizeof(data));
   Serial.print("Temperature: ");
   Serial.print(temperature);
   Serial.print("°C, Soil Moisture: ");
-  Serial.println(soilMoistureValue);
+  Serial.print(soilMoisturePercentage); // Print percentage instead of raw value
+  Serial.println("%");
+
   // Wait before sending again
-  delay(1000); // Delay for 2 seconds
+  delay(1000); // Delay for 1 second
 }
