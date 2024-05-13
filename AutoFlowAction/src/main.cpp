@@ -4,12 +4,17 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
 
 RF24 radio(4, 5); // CE, CSN pins
 
-const char* ssid = "ssid ";
-const char* password = "password ";
-const char* apiEndpoint = "apiEndpoint ";
+const char* ssid = "ssid";
+const char* password = "wifi-pass";
+const char* apiEndpoint = "api-endpoint";
 
 struct SensorData {
   float temperature;
@@ -26,8 +31,13 @@ UltrasonicData latestUltrasonicData;
 unsigned long lastTransmissionTime = 0;
 const unsigned long transmissionInterval = 1 * 60 * 1000; // 1 minute in milliseconds
 
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
 void sendDataToAPI();
 void sendPOSTRequest(String jsonData);
+void displayOnOled();
 
 void setup() {
   Serial.begin(9600);
@@ -47,9 +57,22 @@ void setup() {
 
   // Set the last transmission time to the current time
   lastTransmissionTime = millis();
+
+  // Initialize OLED display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+
+  // Initialize NTP Client
+  timeClient.begin();
+  timeClient.setTimeOffset(25200); // GMT+7 offset in seconds (7 * 3600)
 }
 
 void loop() {
+  // Display data on OLED
+  displayOnOled();
+
   // Check if it's time to send data
   if (millis() - lastTransmissionTime >= transmissionInterval) {
     // Send data to API
@@ -89,9 +112,6 @@ void loop() {
 void sendDataToAPI() {
   // Create JSON object
   StaticJsonDocument<200> doc;
-  // doc["temperature"] = latestSensorData.temperature;
-  // doc["soil_moisture"] = latestSensorData.soilMoisturePercentage;
-  // doc["amount_of_water"] = latestUltrasonicData.depth;
 
   char tempString[6]; // Allocate enough space for the string representation
   sprintf(tempString, "%.1f", latestSensorData.temperature); // Convert temperature to string
@@ -129,4 +149,48 @@ void sendPOSTRequest(String jsonData) {
   }
 
   http.end();
+}
+
+void displayOnOled() {
+    // Update time
+  timeClient.update();
+
+  // Clear the display
+  display.clearDisplay();
+
+  // Print Jakarta time
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print(timeClient.getFormattedTime());
+
+  // Print WiFi status
+  display.setTextSize(1);
+  display.setCursor(53, 0);
+  if (WiFi.status() == WL_CONNECTED) {
+    display.print("Connected");
+  } else {
+    display.print("Disconnected");
+  }
+
+  display.setTextSize(1);
+  display.setCursor(0, 15);
+  display.print("Temperature: ");
+  display.print(latestSensorData.temperature);
+
+  display.setTextSize(1);
+  display.setCursor(0, 30);
+  display.print("Soil Moisture: ");
+  display.print(latestSensorData.soilMoisturePercentage);
+
+  display.setTextSize(1);
+  display.setCursor(0, 45);
+  display.print("Water in Liters: ");
+  display.print(latestUltrasonicData.depth);
+
+  // Display updates
+  display.display();
+
+  // Delay for a second
+  delay(1000);
 }
