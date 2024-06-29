@@ -28,6 +28,8 @@ void setup() {
 void loop() {
   // Read temperature from DHT11 sensor
   float temperature = dht.readTemperature();
+  // Adjust the temperature value for tuning
+  temperature -= 2.0;
 
   // Read soil moisture value
   int soilMoistureValue = analogRead(soilMoisturePin);
