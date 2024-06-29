@@ -35,7 +35,7 @@ void loop() {
   int soilMoistureValue = analogRead(soilMoisturePin);
   
   // Map the soil moisture value to a percentage scale
-  int soilMoisturePercentage = map(soilMoistureValue, 0, 1023, 0, 100);
+  int soilMoisturePercentage = map(soilMoistureValue, 0, 1023, 100, 0);
 
   // Bundle the sensor data
   SensorData data;
