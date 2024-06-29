@@ -62,11 +62,11 @@ FuzzySet *lowWater = new FuzzySet(0, 0, 0.4, 0.6);
 FuzzySet *mediumWater = new FuzzySet(0.4, 0.6, 1.4, 1.6);
 FuzzySet *highWater = new FuzzySet(1.4, 1.6, 2, 2);
 
-// Fuzzy Sets for Watering Duration
+// Fuzzy Sets for Watering Duration (detik)
 FuzzySet *steady = new FuzzySet(0, 0, 0, 0);
-FuzzySet *shortDuration = new FuzzySet(0, 0, 5, 10);
-FuzzySet *mediumDuration = new FuzzySet(5, 10, 10, 15);
-FuzzySet *longDuration = new FuzzySet(10, 15, 20, 20);
+FuzzySet *shortDuration = new FuzzySet(25, 25, 30, 55);
+FuzzySet *mediumDuration = new FuzzySet(25, 45, 55, 80);
+FuzzySet *longDuration = new FuzzySet(55, 70, 80, 80);
 
 void setup() {
   Serial.begin(9600);
