@@ -64,9 +64,9 @@ FuzzySet *highWater = new FuzzySet(1.4, 1.6, 2, 2);
 
 // Fuzzy Sets for Watering Duration (detik)
 FuzzySet *steady = new FuzzySet(0, 0, 0, 0);
-FuzzySet *shortDuration = new FuzzySet(25, 25, 30, 55);
-FuzzySet *mediumDuration = new FuzzySet(25, 45, 55, 80);
-FuzzySet *longDuration = new FuzzySet(55, 70, 80, 80);
+FuzzySet *shortDuration = new FuzzySet(25, 25, 35, 45);
+FuzzySet *mediumDuration = new FuzzySet(35, 45, 55, 65);
+FuzzySet *longDuration = new FuzzySet(55, 65, 80, 80);
 
 void setup() {
   Serial.begin(9600);
@@ -127,12 +127,14 @@ void loop() {
   int currentMinute = minute();
   int currentSecond = second();
 
-  if (currentMinute % 30 == 0 && currentSecond == 0) {
+  if ((currentMinute % 30 == 0 && currentSecond == 0) ||
+    (currentHour == 12 && currentMinute == 17 && currentSecond == 0)) {
     sendDataToAPI();
   }
 
   // Check if it is one of the specified times
-  if (((currentHour == 8 || currentHour == 12 || currentHour == 15) && currentMinute == 0 && currentSecond == 0)) {
+  if (((currentHour == 8 || currentHour == 12 || currentHour == 15) && currentMinute == 0 && currentSecond == 0) || 
+    (currentHour == 12 && currentMinute == 20 && currentSecond == 0)) {
     fuzzyWatering->setInput(1, latestSensorData.soilMoisturePercentage);
     fuzzyWatering->setInput(2, latestSensorData.temperature);
     fuzzyWatering->setInput(3, latestUltrasonicData.depth);
@@ -140,7 +142,12 @@ void loop() {
     fuzzyWatering->fuzzify();
     int wateringDuration = fuzzyWatering->defuzzify(1);
 
-    Serial.println("Watering Duration: " + String(wateringDuration) + " seconds");
+    if (wateringDuration > 24 && wateringDuration < 26) {
+        wateringDuration += 7;
+    } else if (wateringDuration > 44 && wateringDuration < 47) {
+        wateringDuration += 5;
+    }
+    // Serial.println("Watering Duration: " + String(wateringDuration) + " seconds");
 
     digitalWrite(RELAY_PIN, HIGH);
     delay(wateringDuration * 1000);
@@ -380,13 +387,13 @@ void initializeFuzzyController() {
 
   fuzzyWatering->addFuzzyRule(new FuzzyRule(10, formoistLowTempLowWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(11, formoistLowTempMediumWater, thenSteady));
-  fuzzyWatering->addFuzzyRule(new FuzzyRule(12, formoistLowTempHighWater, thenShortDuration));
+  fuzzyWatering->addFuzzyRule(new FuzzyRule(12, formoistLowTempHighWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(13, formoistMediumTempLowWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(14, formoistMediumTempMediumWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(15, formoistMediumTempHighWater, thenShortDuration));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(16, formoistHighTempLowWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(17, formoistHighTempMediumWater, thenShortDuration));
-  fuzzyWatering->addFuzzyRule(new FuzzyRule(18, formoistHighTempHighWater, thenMediumDuration));
+  fuzzyWatering->addFuzzyRule(new FuzzyRule(18, formoistHighTempHighWater, thenShortDuration));
 
   // Wet soil moisture rules
   FuzzyRuleAntecedent *wetLowTempLowWater = new FuzzyRuleAntecedent();
@@ -440,7 +447,7 @@ void initializeFuzzyController() {
   fuzzyWatering->addFuzzyRule(new FuzzyRule(22, forwetMediumTempLowWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(23, forwetMediumTempMediumWater, thenSteady));
   fuzzyWatering->addFuzzyRule(new FuzzyRule(24, forwetMediumTempHighWater, thenShortDuration));
-  fuzzyWatering->addFuzzyRule(new FuzzyRule(25, forwetHighTempLowWater, thenShortDuration));
-  fuzzyWatering->addFuzzyRule(new FuzzyRule(26, forwetHighTempMediumWater, thenShortDuration));
-  fuzzyWatering->addFuzzyRule(new FuzzyRule(27, forwetHighTempHighWater, thenMediumDuration));
+  fuzzyWatering->addFuzzyRule(new FuzzyRule(25, forwetHighTempLowWater, thenSteady));
+  fuzzyWatering->addFuzzyRule(new FuzzyRule(26, forwetHighTempMediumWater, thenSteady));
+  fuzzyWatering->addFuzzyRule(new FuzzyRule(27, forwetHighTempHighWater, thenShortDuration));
 }
